@@ -1,0 +1,18 @@
+# Go API with a pnpm front end.
+version: 1
+
+services:
+  api:
+    command: go
+    args: ["run", "./cmd/api"]
+    working_dir: ./api
+
+  web:
+    command: pnpm
+    args: ["dev"]
+    working_dir: ./web
+    depends_on: [api]
+
+  jobs:
+    command: go
+    args: ["run", "./cmd/jobs"]

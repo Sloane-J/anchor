@@ -1,0 +1,22 @@
+# npm workspaces example: API, worker, and React/Vite web application.
+version: 1
+
+services:
+  api:
+    command: npm
+    args: ["run", "dev", "--workspace=@acme/api"]
+
+  worker:
+    command: npm
+    args: ["run", "dev", "--workspace=@acme/worker"]
+    depends_on: [api]
+
+  web:
+    command: npm
+    args: ["run", "dev", "--workspace=@acme/web"]
+    depends_on: [api]
+
+  admin:
+    command: npm
+    args: ["run", "dev", "--workspace=@acme/admin"]
+    depends_on: [api]

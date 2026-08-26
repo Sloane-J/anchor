@@ -1,0 +1,27 @@
+# Full-stack Node.js example. Copy this file to your project root as dev.yaml
+# and adjust the working directories to match your repository.
+version: 1
+
+services:
+  api:
+    command: npm
+    args: ["run", "dev"]
+    working_dir: ./apps/api
+
+  worker:
+    command: npm
+    args: ["run", "dev"]
+    working_dir: ./apps/worker
+    depends_on: [api]
+
+  web:
+    command: pnpm
+    args: ["dev"]
+    working_dir: ./apps/web
+    depends_on: [api]
+
+  docs:
+    command: pnpm
+    args: ["dev"]
+    working_dir: ./apps/docs
+    depends_on: [web]
