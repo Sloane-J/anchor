@@ -1,0 +1,7 @@
+# Build and test artefacts
+dev.exe
+*.test
+coverage.out
+
+# Runtime state (reserved for future versions)
+.dev-orchestrator/
