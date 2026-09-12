@@ -20,9 +20,36 @@ Objects, labelled concurrent logging, and Ctrl+C shutdown are all in
 place and tested. Phase 5 (documentation, examples, release polish) is
 in progress.
 
-## Build and run
+## Install
 
 Prerequisite: Go 1.26 or later, on Windows.
+
+**Option 1 — `go install` (recommended if you have Go):**
+
+```powershell
+go install github.com/Sloane-J/anchor/cmd/anchor@latest
+```
+
+This builds and places `anchor.exe` in your Go bin directory
+(`%USERPROFILE%\go\bin` by default), which is usually already on your
+PATH. Confirm with:
+
+```powershell
+anchor --version
+```
+
+**Option 2 — build from source manually:**
+
+```powershell
+git clone https://github.com/Sloane-J/anchor.git
+cd anchor
+go build -o anchor.exe .\cmd\anchor
+```
+
+Then either run `.\anchor.exe` directly, or copy `anchor.exe` into a
+folder already on your PATH so you can run `anchor` from anywhere.
+
+## Build and test (for contributors)
 
 ```powershell
 go test ./...
