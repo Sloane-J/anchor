@@ -1,27 +1,72 @@
-# Full-stack Node.js example. Copy this file to your project root as dev.yaml
-# and adjust the working directories to match your repository.
+# Dev Orchestrator example configuration.
+#
+# Copy this file to your project root as dev.yaml and adjust services,
+# commands, and working directories to match your repository.
+#
+# Notes on "command":
+#   - Use the same command you'd type yourself: npm, yarn, pnpm, bun, go,
+#     docker, python, etc. Dev Orchestrator runs it directly (no shell),
+#     so on Windows tools like npm/yarn/pnpm/bun (which are .cmd shims)
+#     are resolved and launched the same way your terminal would.
+#   - "args" is a list of separate arguments, exactly as you'd type them
+#     after the command, e.g. `npm run dev` becomes
+#     command: npm
+#     args: ["run", "dev"]
+#   - "working_dir" is relative to this dev.yaml file unless it's absolute.
+#   - "depends_on" lists services that must be started (not necessarily
+#     finished) before this one starts.
+
 version: 1
 
 services:
+  # --- npm ---
   api:
     command: npm
     args: ["run", "dev"]
     working_dir: ./apps/api
 
+  # --- yarn ---
   worker:
-    command: npm
-    args: ["run", "dev"]
+    command: yarn
+    args: ["dev"]
     working_dir: ./apps/worker
     depends_on: [api]
 
+  # --- pnpm ---
   web:
     command: pnpm
     args: ["dev"]
     working_dir: ./apps/web
     depends_on: [api]
 
+  # --- bun ---
   docs:
-    command: pnpm
-    args: ["dev"]
+    command: bun
+    args: ["run", "dev"]
     working_dir: ./apps/docs
     depends_on: [web]
+
+  # --- Go ---
+  # Runs "go run ." in the given directory. For a compiled binary instead,
+  # use command: ./bin/myservice.exe with no args.
+  scheduler:
+    command: go
+    args: ["run", "."]
+    working_dir: ./apps/scheduler
+
+  # --- Docker Compose ---
+  # Starts backing services (e.g. Postgres, Redis) via Compose. Dev
+  # Orchestrator manages the "docker compose" process itself, not the
+  # containers directly, so Ctrl+C here stops the compose process; add
+  # "docker compose down" as a separate manual step if you need containers
+  # fully removed rather than just stopped.
+  database:
+    command: docker
+    args: ["compose", "up"]
+
+  # --- Python ---
+  ml-service:
+    command: python
+    args: ["-m", "uvicorn", "main:app", "--reload"]
+    working_dir: ./apps/ml-service
+    depends_on: [database]
