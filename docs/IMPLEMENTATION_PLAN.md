@@ -31,7 +31,7 @@ Dates are intentionally omitted. Scope and quality gates are more useful than op
 
 Create the Go module, executable entry point, `.gitignore`, example configuration, baseline test command, and concise build/run README.
 
-**Acceptance:** `go test ./...` and `go vet ./...` pass; `go run ./cmd/dev --help` returns help without importing runtime/process packages.
+**Acceptance:** `go test ./...` and `go vet ./...` pass; `go run ./cmd/anchor --help` returns help without importing runtime/process packages.
 
 ### Phase 1 ? configuration and validation
 

@@ -1,8 +1,8 @@
-# Dev Orchestrator: project context
+# Anchor: project context
 
 ## Problem
 
-Local applications often require dependent commands: a database, API, web client, worker, or mock service. Developers otherwise open multiple terminals, remember ordering, and manually stop everything. Dev Orchestrator provides one repeatable local command to run that stack.
+Local applications often require dependent commands: a database, API, web client, worker, or mock service. Developers otherwise open multiple terminals, remember ordering, and manually stop everything. Anchor provides one repeatable local command to run that stack.
 
 ## Audience
 
@@ -10,7 +10,7 @@ Developers working on Windows, especially repositories with several local servic
 
 ## v0.1 success statement
 
-Given a valid `dev.yaml`, a developer can run `dev start`, see services start in dependency order with labelled logs, and press Ctrl+C to stop all child processes cleanly. Invalid configuration produces a clear error and starts nothing.
+Given a valid `dev.yaml`, a developer can run `anchor start`, see services start in dependency order with labelled logs, and press Ctrl+C to stop all child processes cleanly. Invalid configuration produces a clear error and starts nothing.
 
 ## Non-goals for v0.1
 

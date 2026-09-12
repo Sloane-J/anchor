@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"dev-orchestrator/internal/config"
+	"anchor/internal/config"
 )
 
 var serviceName = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]*$`)

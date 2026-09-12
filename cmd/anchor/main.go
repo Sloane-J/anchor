@@ -1,4 +1,4 @@
-// Command dev starts and supervises local development services.
+// Command anchor starts and supervises local development services.
 package main
 
 import (
@@ -9,24 +9,24 @@ import (
 	"os"
 	"path/filepath"
 
-	"dev-orchestrator/internal/config"
-	"dev-orchestrator/internal/dependency"
-	"dev-orchestrator/internal/logger"
-	"dev-orchestrator/internal/process"
-	"dev-orchestrator/internal/signals"
-	"dev-orchestrator/internal/supervisor"
-	"dev-orchestrator/internal/validator"
+	"anchor/internal/config"
+	"anchor/internal/dependency"
+	"anchor/internal/logger"
+	"anchor/internal/process"
+	"anchor/internal/signals"
+	"anchor/internal/supervisor"
+	"anchor/internal/validator"
 )
 
 // version is the current release version. Bump it for each release.
 const version = "0.1.0"
 
-const usage = `Dev Orchestrator starts local development services from dev.yaml.
+const usage = `Anchor starts local development services from dev.yaml.
 
 Usage:
-  dev start [--file path] [--debug]  Start configured services in dependency order
-  dev --version                      Show version
-  dev --help                         Show this help
+  anchor start [--file path] [--debug]  Start configured services in dependency order
+  anchor --version                      Show version
+  anchor --help                         Show this help
 
 Exit codes:
   0    clean shutdown
@@ -54,7 +54,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 
 	if args[0] == "--version" || args[0] == "-v" {
-		_, _ = fmt.Fprintf(stdout, "dev-orchestrator %s\n", version)
+		_, _ = fmt.Fprintf(stdout, "anchor %s\n", version)
 		return exitOK
 	}
 

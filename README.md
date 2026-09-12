@@ -1,4 +1,4 @@
-# Dev Orchestrator
+# Anchor
 
 Windows-first Go CLI for starting a local development stack from `dev.yaml`.
 
@@ -14,7 +14,7 @@ labelled logs, and cleanly stops every started service on Ctrl+C.
 
 ## Current stage
 
-`dev start` is implemented and working: configuration loading and
+`anchor start` is implemented and working: configuration loading and
 validation, dependency ordering, process start/stop via Windows Job
 Objects, labelled concurrent logging, and Ctrl+C shutdown are all in
 place and tested. Phase 5 (documentation, examples, release polish) is
@@ -27,7 +27,7 @@ Prerequisite: Go 1.26 or later, on Windows.
 ```powershell
 go test ./...
 go vet ./...
-go run ./cmd/dev --help
+go run ./cmd/anchor --help
 ```
 
 ## Quick start
@@ -38,13 +38,13 @@ go run ./cmd/dev --help
 2. Run:
 
 ```powershell
-   go run ./cmd/dev start
+   go run ./cmd/anchor start
 ```
 
    Or, from a `dev.yaml` in a different location:
 
 ```powershell
-   go run ./cmd/dev start --file path\to\dev.yaml
+   go run ./cmd/anchor start --file path\to\dev.yaml
 ```
 
 3. Services start in dependency order. Output is prefixed with a
@@ -99,7 +99,7 @@ any process is started, with an error identifying the affected service.
 ## Current limitations (v0.1)
 
 - Windows only. Linux/WSL support is planned but not yet implemented.
-- No `dev stop`, `dev status`, or `dev logs` commands — `dev start` runs
+- No `anchor stop`, `anchor status`, or `anchor logs` commands — `anchor start` runs
   in the foreground until it exits or is interrupted.
 - No automatic restart or health checks.
 - Commands are run directly, not through a shell — features that rely on

@@ -7,16 +7,16 @@ a release.
 
 ## Setup
 
-- [ ] Build a fresh binary: `go build -o dev.exe ./cmd/dev`
+- [ ] Build a fresh binary: `go build -o anchor.exe ./cmd/anchor`
 - [ ] Have at least one real Node.js project available with an npm or
       pnpm dev script, to test against a real long-running dev server.
 
 ## Basic flow
 
-- [ ] `dev.exe --help` prints usage and exits `0`.
-- [ ] `dev.exe start` with no `dev.yaml` in the current directory prints
+- [ ] `anchor.exe --help` prints usage and exits `0`.
+- [ ] `anchor.exe start` with no `dev.yaml` in the current directory prints
       a clear, actionable error and exits `1`.
-- [ ] `dev.exe start --file path\to\dev.yaml` loads a config from a
+- [ ] `anchor.exe start --file path\to\dev.yaml` loads a config from a
       non-default location.
 
 ## Configuration validation
@@ -48,17 +48,17 @@ a release.
 - [ ] Press **Ctrl+Break** instead of Ctrl+C (if your terminal supports
       it) and confirm the same clean shutdown behaviour.
 - [ ] Kill one service's process directly from Task Manager while
-      `dev start` is running (simulating a crash). Confirm:
-  - [ ] `dev start` detects the exit and reports it as failed.
+      `anchor start` is running (simulating a crash). Confirm:
+  - [ ] `anchor start` detects the exit and reports it as failed.
   - [ ] Every other running service is stopped in reverse order.
-  - [ ] `dev.exe` itself exits with code `2`.
+  - [ ] `anchor.exe` itself exits with code `2`.
 
 ## Terminal compatibility
 
-- [ ] Run `dev start` in PowerShell.
-- [ ] Run `dev start` in Command Prompt (`cmd.exe`).
-- [ ] Run `dev start` in an IDE-integrated terminal (VS Code or similar).
-- [ ] Run `dev start` in Git Bash. Note: Git Bash may reinterpret certain
+- [ ] Run `anchor start` in PowerShell.
+- [ ] Run `anchor start` in Command Prompt (`cmd.exe`).
+- [ ] Run `anchor start` in an IDE-integrated terminal (VS Code or similar).
+- [ ] Run `anchor start` in Git Bash. Note: Git Bash may reinterpret certain
       argument forms (e.g. leading single-slash flags like `/c`) — if a
       command behaves unexpectedly only in Git Bash, retest the same
       `dev.yaml` from PowerShell before treating it as a bug in Dev

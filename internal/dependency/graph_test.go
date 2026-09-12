@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"dev-orchestrator/internal/config"
+	"anchor/internal/config"
 )
 
 func svc(deps ...string) config.Service {

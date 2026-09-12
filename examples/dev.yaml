@@ -1,11 +1,11 @@
-# Dev Orchestrator example configuration.
+# Anchor example configuration.
 #
 # Copy this file to your project root as dev.yaml and adjust services,
 # commands, and working directories to match your repository.
 #
 # Notes on "command":
 #   - Use the same command you'd type yourself: npm, yarn, pnpm, bun, go,
-#     docker, python, etc. Dev Orchestrator runs it directly (no shell),
+#     docker, python, etc. Anchor runs it directly (no shell),
 #     so on Windows tools like npm/yarn/pnpm/bun (which are .cmd shims)
 #     are resolved and launched the same way your terminal would.
 #   - "args" is a list of separate arguments, exactly as you'd type them

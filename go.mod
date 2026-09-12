@@ -1,4 +1,4 @@
-module dev-orchestrator
+module anchor
 
 go 1.26.3
 

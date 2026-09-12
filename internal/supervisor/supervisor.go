@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	"dev-orchestrator/internal/dependency"
-	"dev-orchestrator/internal/process"
+	"anchor/internal/dependency"
+	"anchor/internal/process"
 )
 
 // State is a service's lifecycle stage. See ARCHITECTURE.md's service

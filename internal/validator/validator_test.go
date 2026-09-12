@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"dev-orchestrator/internal/config"
+	"anchor/internal/config"
 )
 
 func TestValidateAcceptsValidConfiguration(t *testing.T) {

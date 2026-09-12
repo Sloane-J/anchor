@@ -1,4 +1,4 @@
-# Dev Orchestrator architecture
+# Anchor architecture
 
 **Status:** approved baseline for v0.1  
 **Target:** Windows-first Go CLI to run a local development stack from `dev.yaml`.
@@ -61,7 +61,7 @@ flowchart TD
 
 Dependencies remain inward: lower-level packages never import `cli`. `process`, `logger`, and `signals` expose small interfaces consumed by `supervisor`.
 
-## `dev start` sequence
+## `anchor start` sequence
 
 ```mermaid
 sequenceDiagram
@@ -120,7 +120,7 @@ v0.1 implements `Pending`, `Starting`, `Running`, `Failed`, and `Stopped`. `Rest
 
 ## UX contract
 
-- `dev start` defaults to `./dev.yaml`; `--file` selects another file.
+- `anchor start` defaults to `./dev.yaml`; `--file` selects another file.
 - Validate all configuration before launching a child process.
 - Show service, outcome, and the next useful action on failure.
 - Prefix every line with timestamp, service, and stream (`OUT`/`ERR`). Colour is never the sole distinction.

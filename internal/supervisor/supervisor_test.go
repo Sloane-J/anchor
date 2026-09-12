@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"dev-orchestrator/internal/dependency"
-	"dev-orchestrator/internal/process"
+	"anchor/internal/dependency"
+	"anchor/internal/process"
 )
 
 func specsFor(names ...string) map[string]ServiceSpec {

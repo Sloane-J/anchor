@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"dev-orchestrator/internal/config"
+	"anchor/internal/config"
 )
 
 // CycleError reports a dependency cycle as a readable path.
