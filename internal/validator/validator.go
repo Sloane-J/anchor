@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"anchor/internal/config"
+	"github.com/Sloane-J/anchor/internal/config"
 )
 
 var serviceName = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]*$`)

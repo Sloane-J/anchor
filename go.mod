@@ -1,4 +1,4 @@
-module anchor
+module github.com/Sloane-J/anchor
 
 go 1.26.3
 

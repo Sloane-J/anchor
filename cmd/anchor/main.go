@@ -9,13 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"anchor/internal/config"
-	"anchor/internal/dependency"
-	"anchor/internal/logger"
-	"anchor/internal/process"
-	"anchor/internal/signals"
-	"anchor/internal/supervisor"
-	"anchor/internal/validator"
+	"github.com/Sloane-J/anchor/internal/config"
+	"github.com/Sloane-J/anchor/internal/dependency"
+	"github.com/Sloane-J/anchor/internal/logger"
+	"github.com/Sloane-J/anchor/internal/process"
+	"github.com/Sloane-J/anchor/internal/signals"
+	"github.com/Sloane-J/anchor/internal/supervisor"
+	"github.com/Sloane-J/anchor/internal/validator"
 )
 
 // version is the current release version. Bump it for each release.

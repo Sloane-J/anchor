@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"anchor/internal/config"
+	"github.com/Sloane-J/anchor/internal/config"
 )
 
 // CycleError reports a dependency cycle as a readable path.

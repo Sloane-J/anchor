@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	"anchor/internal/dependency"
-	"anchor/internal/process"
+	"github.com/Sloane-J/anchor/internal/dependency"
+	"github.com/Sloane-J/anchor/internal/process"
 )
 
 // State is a service's lifecycle stage. See ARCHITECTURE.md's service

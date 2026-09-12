@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"anchor/internal/config"
+	"github.com/Sloane-J/anchor/internal/config"
 )
 
 func svc(deps ...string) config.Service {

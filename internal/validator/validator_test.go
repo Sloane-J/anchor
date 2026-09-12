@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"anchor/internal/config"
+	"github.com/Sloane-J/anchor/internal/config"
 )
 
 func TestValidateAcceptsValidConfiguration(t *testing.T) {
