@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,11 +18,15 @@ import (
 	"dev-orchestrator/internal/validator"
 )
 
+// version is the current release version. Bump it for each release.
+const version = "0.1.0"
+
 const usage = `Dev Orchestrator starts local development services from dev.yaml.
 
 Usage:
-  dev start [--file path]  Start configured services in dependency order
-  dev --help               Show this help
+  dev start [--file path] [--debug]  Start configured services in dependency order
+  dev --version                      Show version
+  dev --help                         Show this help
 
 Exit codes:
   0    clean shutdown
@@ -48,6 +53,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitOK
 	}
 
+	if args[0] == "--version" || args[0] == "-v" {
+		_, _ = fmt.Fprintf(stdout, "dev-orchestrator %s\n", version)
+		return exitOK
+	}
+
 	switch args[0] {
 	case "start":
 		return runStart(args[1:], stdout, stderr)
@@ -59,27 +69,44 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func runStart(args []string, stdout, stderr io.Writer) int {
 	path := "dev.yaml"
+	debug := false
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--file" && i+1 < len(args) {
-			path = args[i+1]
-			i++
+		switch args[i] {
+		case "--file":
+			if i+1 < len(args) {
+				path = args[i+1]
+				i++
+			}
+		case "--debug":
+			debug = true
 		}
+	}
+
+	reportErr := func(err error) {
+		if debug {
+			_, _ = fmt.Fprintf(stderr, "error: %v\n\ndebug: full error chain:\n", err)
+			for u := err; u != nil; u = errors.Unwrap(u) {
+				_, _ = fmt.Fprintf(stderr, "  - %v\n", u)
+			}
+			return
+		}
+		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
 	}
 
 	cfg, err := config.Load(path)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+		reportErr(err)
 		return exitConfigError
 	}
 
 	if err := validator.Validate(cfg); err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+		reportErr(err)
 		return exitConfigError
 	}
 
 	plan, err := dependency.Build(cfg)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+		reportErr(err)
 		return exitConfigError
 	}
 
@@ -97,7 +124,7 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 
-  sup := supervisor.New(process.NewRunner(), specs)
+	sup := supervisor.New(process.NewRunner(), specs)
 
 	ctx, stop := signals.WithCancelOnInterrupt(context.Background())
 	defer stop()
@@ -119,12 +146,12 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 			}
 			reportStatus(stdout, ev)
 		case err := <-done:
-			return finish(stdout, ctx, err)
+			return finish(stdout, stderr, ctx, err, debug, reportErr)
 		}
 	}
 }
 
-func finish(stdout io.Writer, ctx context.Context, err error) int {
+func finish(stdout, stderr io.Writer, ctx context.Context, err error, debug bool, reportErr func(error)) int {
 	if err == nil {
 		_, _ = fmt.Fprintln(stdout, "all services stopped")
 		return exitOK
@@ -135,7 +162,7 @@ func finish(stdout io.Writer, ctx context.Context, err error) int {
 		return exitInterrupted
 	}
 
-	_, _ = fmt.Fprintf(stdout, "error: %v\n", err)
+	reportErr(err)
 	return exitRuntimeFailure
 }
 
