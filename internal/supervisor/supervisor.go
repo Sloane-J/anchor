@@ -105,10 +105,22 @@ func (s *Supervisor) setState(name string, st State) {
 	s.mu.Unlock()
 }
 
-// Run starts services from plan.Startup in order. It stops as soon as
-// either a service fails to start, or ctx is cancelled (e.g. Ctrl+C) before
-// the next service starts. In either case, Run stops every service it
-// already started, in reverse startup order, before returning.
+// exitReport is sent internally when a running service's process exits on
+// its own, whether cleanly or with an error.
+type exitReport struct {
+	name   string
+	result process.ExitResult
+	err    error
+}
+
+// Run starts services from plan.Startup in order, then blocks until one of:
+//   - ctx is cancelled (e.g. Ctrl+C), or
+//   - a service fails to start, or
+//   - a running service exits on its own (crashes or otherwise stops
+//     without Stop being called).
+//
+// In every case, Run stops every service it started, in reverse startup
+// order, before returning.
 //
 // events, if non-nil, receives a StatusEvent for every state transition.
 // Callers should read from events concurrently so Run does not block.
@@ -168,12 +180,50 @@ startLoop:
 		return startErr
 	}
 
-	return nil
+	// All services started successfully. Now watch every one of them
+	// concurrently: wait for the first of (a) context cancellation or
+	// (b) any service exiting on its own.
+	exitCh := make(chan exitReport, len(startedOrder))
+	for _, name := range startedOrder {
+		s.mu.Lock()
+		handle := s.handles[name]
+		s.mu.Unlock()
+
+		go func(name string, handle process.Handle) {
+			result, err := handle.Wait()
+			exitCh <- exitReport{name: name, result: result, err: err}
+		}(name, handle)
+	}
+
+	var runErr error
+	alreadyExited := ""
+	select {
+	case <-ctx.Done():
+		runErr = ctx.Err()
+	case report := <-exitCh:
+		alreadyExited = report.name
+		if report.result.Stopped {
+			runErr = fmt.Errorf("service %q stopped", report.name)
+		} else if report.err != nil {
+			runErr = fmt.Errorf("service %q: %w", report.name, report.err)
+			emit(report.name, Failed, runErr)
+		} else {
+			runErr = fmt.Errorf("service %q exited unexpectedly with code %d", report.name, report.result.Code)
+			emit(report.name, Failed, runErr)
+		}
+	}
+
+	remaining := make([]string, 0, len(startedOrder))
+	for _, name := range startedOrder {
+		if name != alreadyExited {
+			remaining = append(remaining, name)
+		}
+	}
+		s.stopStarted(remaining, emit)
+	return runErr
 }
 
 // Stop stops every currently-tracked, started service in reverse startup
-// order. It is safe to call after Run has already returned — for example,
-// from a Ctrl+C handler once all services are confirmed Running.
 func (s *Supervisor) Stop() {
 	s.mu.Lock()
 	order := make([]string, 0, len(s.handles))
