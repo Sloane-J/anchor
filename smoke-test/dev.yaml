@@ -1,6 +1,0 @@
-version: 1
-
-services:
-  hello:
-    command: cmd
-    args: ["/c", "echo hello from dev-orchestrator && ping -t 127.0.0.1"]

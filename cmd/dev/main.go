@@ -98,9 +98,6 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 	}
 
   sup := supervisor.New(process.NewRunner(), specs)
-	for name, spec := range specs {
-		fmt.Fprintf(stdout, "DEBUG spec %q: command=%q args=%#v dir=%q\n", name, spec.Command, spec.Args, spec.Dir)
-	}
 
 	ctx, stop := signals.WithCancelOnInterrupt(context.Background())
 	defer stop()
