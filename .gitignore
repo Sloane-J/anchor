@@ -5,4 +5,4 @@ dev.exe
 coverage.out
 
 # Runtime state (reserved for future versions)
-.dev-orchestrator/
+.anchor/
