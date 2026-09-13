@@ -3,7 +3,9 @@
 // Each service's stdout and stderr is wrapped in a Writer that prefixes
 // every line with a timestamp, the service name, and the stream (OUT or
 // ERR), per ARCHITECTURE.md's UX contract. Writers are safe for concurrent
-// use by multiple services writing at once.
+// use by multiple services writing at once. Each service is assigned a
+// stable colour for the duration of a run, so its lines are visually
+// distinct from other services'.
 package logger
 
 import (
@@ -21,8 +23,9 @@ type Clock func() time.Time
 // single underlying writer, serializing concurrent writes so lines from
 // different services are never interleaved mid-line.
 type Multiplexer struct {
-	out   io.Writer
-	clock Clock
+	out     io.Writer
+	clock   Clock
+	colorer *ServiceColorer
 
 	mu sync.Mutex
 }
@@ -33,7 +36,7 @@ func New(out io.Writer, clock Clock) *Multiplexer {
 	if clock == nil {
 		clock = time.Now
 	}
-	return &Multiplexer{out: out, clock: clock}
+	return &Multiplexer{out: out, clock: clock, colorer: NewServiceColorer()}
 }
 
 // Stream identifies which output stream a line came from.
@@ -59,7 +62,15 @@ func (m *Multiplexer) writeLine(service string, stream Stream, line string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	timestamp := m.clock().Format("15:04:05.000")
-	fmt.Fprintf(m.out, "%s %-12s %s %s\n", timestamp, service, stream, line)
+	color := m.colorer.Color(service)
+	label := Colorize(color, fmt.Sprintf("%-12s", service))
+	streamLabel := string(stream)
+	if stream == Stderr {
+		streamLabel = Colorize(ansiRed, streamLabel)
+	} else {
+		streamLabel = Colorize(ansiGray, streamLabel)
+	}
+	fmt.Fprintf(m.out, "%s %s %s %s\n", timestamp, label, streamLabel, line)
 }
 
 // LineWriter accumulates bytes written to it and emits one labelled line

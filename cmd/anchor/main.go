@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Sloane-J/anchor/internal/config"
 	"github.com/Sloane-J/anchor/internal/dependency"
@@ -42,6 +43,22 @@ const (
 	exitRuntimeFailure = 2
 	exitInterrupted    = 130
 )
+
+// ANSI colours for CLI-level status messages (distinct from per-service
+// log line colours in internal/logger).
+const (
+	ansiReset  = "\x1b[0m"
+	ansiBold   = "\x1b[1m"
+	ansiGreen  = "\x1b[32m"
+	ansiYellow = "\x1b[33m"
+	ansiRed    = "\x1b[31m"
+	ansiGray   = "\x1b[90m"
+	ansiCyan   = "\x1b[36m"
+)
+
+func colorize(color, text string) string {
+	return color + text + ansiReset
+}
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -84,13 +101,13 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 
 	reportErr := func(err error) {
 		if debug {
-			_, _ = fmt.Fprintf(stderr, "error: %v\n\ndebug: full error chain:\n", err)
+			_, _ = fmt.Fprintf(stderr, "%s %v\n\ndebug: full error chain:\n", colorize(ansiRed, "error:"), err)
 			for u := err; u != nil; u = errors.Unwrap(u) {
 				_, _ = fmt.Fprintf(stderr, "  - %v\n", u)
 			}
 			return
 		}
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%s %v\n", colorize(ansiRed, "error:"), err)
 	}
 
 	cfg, err := config.Load(path)
@@ -129,7 +146,11 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 	ctx, stop := signals.WithCancelOnInterrupt(context.Background())
 	defer stop()
 
-	_, _ = fmt.Fprintf(stdout, "starting %d service(s) from %s\n", len(plan.Startup), cfg.SourcePath)
+	_, _ = fmt.Fprintf(stdout, "%s %s: starting %d service(s) from %s\n",
+		"🚀", colorize(ansiBold+ansiCyan, "Anchor"), len(plan.Startup), filepath.Base(cfg.SourcePath))
+
+	start := time.Now()
+	succeeded := 0
 
 	events := make(chan supervisor.StatusEvent, 32)
 	done := make(chan error, 1)
@@ -144,38 +165,50 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 				events = nil
 				continue
 			}
+			if ev.State == supervisor.Running {
+				succeeded++
+			}
 			reportStatus(stdout, ev)
 		case err := <-done:
-			return finish(stdout, stderr, ctx, err, debug, reportErr)
+			return finish(stdout, stderr, ctx, err, debug, reportErr, succeeded, len(plan.Startup), time.Since(start))
 		}
 	}
 }
 
-func finish(stdout, stderr io.Writer, ctx context.Context, err error, debug bool, reportErr func(error)) int {
+func finish(stdout, stderr io.Writer, ctx context.Context, err error, debug bool, reportErr func(error), succeeded, total int, elapsed time.Duration) int {
+	summary := func() {
+		_, _ = fmt.Fprintf(stdout, "\n  %s  %d successful, %d total\n  %s     %s\n",
+			colorize(ansiGray, "Services:"), succeeded, total,
+			colorize(ansiGray, "Uptime:"), elapsed.Round(100*time.Millisecond))
+	}
+
 	if err == nil {
-		_, _ = fmt.Fprintln(stdout, "all services stopped")
+		summary()
+		_, _ = fmt.Fprintf(stdout, "%s Clean shutdown.\n", colorize(ansiGreen, "✅"))
 		return exitOK
 	}
 
 	if ctx.Err() != nil {
-		_, _ = fmt.Fprintln(stdout, "shutdown complete")
+		summary()
+		_, _ = fmt.Fprintf(stdout, "%s Clean shutdown. 👋\n", colorize(ansiGreen, "✅"))
 		return exitInterrupted
 	}
 
 	reportErr(err)
+	summary()
 	return exitRuntimeFailure
 }
 
 func reportStatus(w io.Writer, ev supervisor.StatusEvent) {
 	switch ev.State {
 	case supervisor.Starting:
-		_, _ = fmt.Fprintf(w, "-- %s: starting\n", ev.Name)
+		_, _ = fmt.Fprintf(w, "  %s %-12s %s\n", colorize(ansiYellow, "⚙️ "), ev.Name, colorize(ansiYellow, "starting"))
 	case supervisor.Running:
-		_, _ = fmt.Fprintf(w, "-- %s: running\n", ev.Name)
+		_, _ = fmt.Fprintf(w, "  %s %-12s %s\n", colorize(ansiGreen, "✅"), ev.Name, colorize(ansiGreen, "running"))
 	case supervisor.Stopped:
-		_, _ = fmt.Fprintf(w, "-- %s: stopped\n", ev.Name)
+		_, _ = fmt.Fprintf(w, "  %s %-12s %s\n", colorize(ansiGray, "🛑"), ev.Name, colorize(ansiGray, "stopped"))
 	case supervisor.Failed:
-		_, _ = fmt.Fprintf(w, "-- %s: failed: %v\n", ev.Name, ev.Err)
+		_, _ = fmt.Fprintf(w, "  %s %-12s %s: %v\n", colorize(ansiRed, "❌"), ev.Name, colorize(ansiRed, "failed"), ev.Err)
 	}
 }
 
