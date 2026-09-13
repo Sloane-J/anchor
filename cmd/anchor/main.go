@@ -21,7 +21,7 @@ import (
 )
 
 // version is the current release version. Bump it for each release.
-const version = "0.1.1"
+const version = "0.2.0"
 
 const usage = `Anchor starts local development services from dev.yaml.
 
