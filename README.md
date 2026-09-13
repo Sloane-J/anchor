@@ -78,6 +78,9 @@ go run ./cmd/anchor --help
    timestamp, service name, and stream (`OUT`/`ERR`).
 4. Press **Ctrl+C** to stop every started service, in reverse startup
    order.
+5. From another terminal, run `anchor status` (or `anchor status --file
+   path\to\dev.yaml`) to see which services are currently running,
+   without needing to watch the `anchor start` terminal.
 
 ## `dev.yaml` format
 
@@ -126,7 +129,8 @@ any process is started, with an error identifying the affected service.
 ## Current limitations (v0.1)
 
 - Windows only. Linux/WSL support is planned but not yet implemented.
-- No `anchor stop`, `anchor status`, or `anchor logs` commands — `anchor start` runs
+- No `anchor stop` or `anchor logs` commands — `anchor start` runs
+- `anchor status` relies on a state file that is removed on clean shutdown; if a session crashes instead of shutting down normally, `anchor status` will flag the state as stale rather than trusting it blindly.
   in the foreground until it exits or is interrupted.
 - No automatic restart or health checks.
 - Commands are run directly, not through a shell — features that rely on

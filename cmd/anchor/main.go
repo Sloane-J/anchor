@@ -15,6 +15,7 @@ import (
 	"github.com/Sloane-J/anchor/internal/logger"
 	"github.com/Sloane-J/anchor/internal/process"
 	"github.com/Sloane-J/anchor/internal/signals"
+	"github.com/Sloane-J/anchor/internal/statefile"
 	"github.com/Sloane-J/anchor/internal/supervisor"
 	"github.com/Sloane-J/anchor/internal/validator"
 )
@@ -26,6 +27,7 @@ const usage = `Anchor starts local development services from dev.yaml.
 
 Usage:
   anchor start [--file path] [--debug]  Start configured services in dependency order
+  anchor status [--file path]           Show the status of a running (or last known) session
   anchor --version                      Show version
   anchor --help                         Show this help
 
@@ -78,23 +80,29 @@ func run(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "start":
 		return runStart(args[1:], stdout, stderr)
+	case "status":
+		return runStatus(args[1:], stdout, stderr)
 	default:
 		_, _ = fmt.Fprintf(stderr, "unknown command: %s\n\n%s", args[0], usage)
 		return exitConfigError
 	}
 }
 
-func runStart(args []string, stdout, stderr io.Writer) int {
+func parseFileFlag(args []string) string {
 	path := "dev.yaml"
-	debug := false
 	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--file":
-			if i+1 < len(args) {
-				path = args[i+1]
-				i++
-			}
-		case "--debug":
+		if args[i] == "--file" && i+1 < len(args) {
+			path = args[i+1]
+		}
+	}
+	return path
+}
+
+func runStart(args []string, stdout, stderr io.Writer) int {
+	path := parseFileFlag(args)
+	debug := false
+	for _, a := range args {
+		if a == "--debug" {
 			debug = true
 		}
 	}
@@ -149,8 +157,23 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 	_, _ = fmt.Fprintf(stdout, "%s %s: starting %d service(s) from %s\n",
 		"🚀", colorize(ansiBold+ansiCyan, "Anchor"), len(plan.Startup), filepath.Base(cfg.SourcePath))
 
-	start := time.Now()
+	startTime := time.Now()
 	succeeded := 0
+
+	// Initialize the state file so `anchor status` has something to read
+	// from the moment services start being tracked, even before the
+	// first StatusEvent arrives.
+	sessionState := statefile.State{
+		PID:        os.Getpid(),
+		ConfigPath: cfg.SourcePath,
+		StartedAt:  startTime,
+		Services:   make(map[string]statefile.ServiceStatus, len(specs)),
+	}
+	for name := range specs {
+		sessionState.Services[name] = statefile.ServiceStatus{State: "pending", Since: startTime}
+	}
+	_ = statefile.Write(cfg.SourcePath, sessionState)
+	defer func() { _ = statefile.Remove(cfg.SourcePath) }()
 
 	events := make(chan supervisor.StatusEvent, 32)
 	done := make(chan error, 1)
@@ -168,11 +191,64 @@ func runStart(args []string, stdout, stderr io.Writer) int {
 			if ev.State == supervisor.Running {
 				succeeded++
 			}
+			sessionState.Services[ev.Name] = statefile.ServiceStatus{
+				State: ev.State.String(),
+				Since: time.Now(),
+			}
+			_ = statefile.Write(cfg.SourcePath, sessionState)
 			reportStatus(stdout, ev)
 		case err := <-done:
-			return finish(stdout, stderr, ctx, err, debug, reportErr, succeeded, len(plan.Startup), time.Since(start))
+			return finish(stdout, stderr, ctx, err, debug, reportErr, succeeded, len(plan.Startup), time.Since(startTime))
 		}
 	}
+}
+
+func runStatus(args []string, stdout, stderr io.Writer) int {
+	path := parseFileFlag(args)
+
+	cfg, err := config.Load(path)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "%s %v\n", colorize(ansiRed, "error:"), err)
+		return exitConfigError
+	}
+
+	state, ok, err := statefile.Read(cfg.SourcePath)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "%s %v\n", colorize(ansiRed, "error:"), err)
+		return exitRuntimeFailure
+	}
+	if !ok {
+		_, _ = fmt.Fprintf(stdout, "%s No session running for %s\n", colorize(ansiGray, "○"), filepath.Base(cfg.SourcePath))
+		return exitOK
+	}
+
+	alive := process.IsAlive(state.PID)
+	if !alive {
+		_, _ = fmt.Fprintf(stdout, "%s Stale state found for %s (process %d is not running; last known state below may be inaccurate)\n\n",
+			colorize(ansiYellow, "⚠️ "), filepath.Base(cfg.SourcePath), state.PID)
+	} else {
+		_, _ = fmt.Fprintf(stdout, "%s Session running for %s (pid %d, up %s)\n\n",
+			colorize(ansiGreen, "●"), filepath.Base(cfg.SourcePath), state.PID, time.Since(state.StartedAt).Round(time.Second))
+	}
+
+	for name, svc := range state.Services {
+		var icon, color string
+		switch svc.State {
+		case "running":
+			icon, color = "✅", ansiGreen
+		case "starting", "pending":
+			icon, color = "⚙️ ", ansiYellow
+		case "stopped":
+			icon, color = "🛑", ansiGray
+		case "failed":
+			icon, color = "❌", ansiRed
+		default:
+			icon, color = "?", ansiGray
+		}
+		_, _ = fmt.Fprintf(stdout, "  %s %-12s %s\n", icon, name, colorize(color, svc.State))
+	}
+
+	return exitOK
 }
 
 func finish(stdout, stderr io.Writer, ctx context.Context, err error, debug bool, reportErr func(error), succeeded, total int, elapsed time.Duration) int {
